@@ -1,3 +1,5 @@
+const { ref, uploadBytes } = require('firebase/storage');
+
 // Models
 const { Post } = require('../models/post.model');
 const { User } = require('../models/user.model');
@@ -5,10 +7,27 @@ const { Comment } = require('../models/comment.model');
 
 // Utils
 const { catchAsync } = require('../utils/catchAsync.utils');
-const { AppError } = require('../utils/appError.util');
+const { Email } = require('../utils/email.util');
+const { storage } = require('../utils/firebase.util');
 
 const getAllPosts = catchAsync(async (req, res, next) => {
-	const posts = await Post.findAll();
+	// Include user (post's author)
+	// Include comments
+	// Include user (comment's author)
+	const posts = await Post.findAll({
+		attributes: ['id', 'title', 'content'],
+		include: [
+			{ model: User, attributes: ['id', 'name', 'email'] },
+			{
+				model: Comment,
+				attributes: ['id', 'comment'],
+				include: {
+					model: User,
+					attributes: ['id', 'name', 'email'],
+				},
+			},
+		],
+	});
 
 	res.status(200).json({
 		status: 'success',
@@ -20,14 +39,24 @@ const createPost = catchAsync(async (req, res, next) => {
 	const { title, content } = req.body;
 	const { sessionUser } = req;
 
-	const newPost = await Post.create({
-		title,
-		content,
-	});
+	const imgRef = ref(storage, `${Date.now()}_${req.file.originalname}`);
+
+	const imgRes = await uploadBytes(imgRef, req.file.buffer);
+
+	console.log(imgRes);
+
+	// const newPost = await Post.create({
+	// 	title,
+	// 	content,
+	// 	userId: sessionUser.id,
+	// });
+
+	// // Send mail when post has been created
+	// await new Email(sessionUser.email).sendNewPost(title, content);
 
 	res.status(201).json({
 		status: 'success',
-		newPost,
+		// newPost,
 	});
 });
 

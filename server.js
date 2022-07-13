@@ -1,25 +1,17 @@
 const { app } = require('./app');
 
-//Models
-const { User } = require('./models/user.model');
-const { Post } = require('./models/post.model');
-const { Comment } = require('./models/comment.model')
+const { initModels } = require('./models/initModels');
 
 // Utils
 const { db } = require('./utils/database.util');
+
 
 db.authenticate()
 	.then(() => console.log('Db authenticated'))
 	.catch(err => console.log(err));
 
-User.hasMany(Post, {foreignKey: 'userId'});
-Post.belongsTo(User);
-
-User.hasMany(Comment, { foreignKey: 'userId' });
-Comment.belongsTo(User);
-
-Post.hasMany(Comment, { foreignKey: 'postId' });
-Comment.belongsTo(Post);
+//Establish models relations
+initModels();
 
 db.sync()
 	.then(() => console.log('Db synced'))

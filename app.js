@@ -3,17 +3,19 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const path = require('path');
 
 // Routers
 const { usersRouter } = require('./routes/users.routes');
 const { postsRouter } = require('./routes/posts.routes');
 const { commentsRouter } = require('./routes/comments.routes');
+const { viewsRouter } = require('./routes/views.routes');
 
 //Global Error Handler
 const { globalErrorHandler } = require('./controllers/error.controller')
 
 //Utils
-const { AppError } = require('./utils/appError.util')
+const { AppError } = require('./utils/appError.util');
 
 // Init express app
 const app = express();
@@ -38,10 +40,18 @@ else app.use(morgan('combined'));
 //Enable incoming json
 app.use(express.json());
 
+//Set template engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+//Serving static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Define endpoints
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/posts', postsRouter);
 app.use('/api/v1/comments', commentsRouter);
+app.use('/', viewsRouter);
 
 //Handle incoming unknown routes to the server
 app.all('*', (req, res, next) => {
